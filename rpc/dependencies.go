@@ -6,12 +6,13 @@ package rpc
 import (
 	"context"
 
+	"hyper-updates/genesis"
+	"hyper-updates/orderbook"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/trace"
 	"github.com/ava-labs/hypersdk/chain"
 	"github.com/ava-labs/hypersdk/codec"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/genesis"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/orderbook"
 )
 
 type Controller interface {

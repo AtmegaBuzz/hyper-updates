@@ -6,14 +6,15 @@ package controller
 import (
 	"context"
 
+	"hyper-updates/genesis"
+	"hyper-updates/orderbook"
+	"hyper-updates/storage"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/trace"
 	"github.com/ava-labs/avalanchego/utils/logging"
 	"github.com/ava-labs/hypersdk/chain"
 	"github.com/ava-labs/hypersdk/codec"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/genesis"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/orderbook"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/storage"
 )
 
 func (c *Controller) Genesis() *genesis.Genesis {

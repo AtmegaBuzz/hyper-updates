@@ -15,11 +15,11 @@ import (
 	"github.com/ava-labs/hypersdk/utils"
 	"github.com/spf13/cobra"
 
-	"github.com/ava-labs/hypersdk/examples/tokenvm/auth"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/challenge"
-	frpc "github.com/ava-labs/hypersdk/examples/tokenvm/cmd/token-faucet/rpc"
-	tconsts "github.com/ava-labs/hypersdk/examples/tokenvm/consts"
-	trpc "github.com/ava-labs/hypersdk/examples/tokenvm/rpc"
+	"hyper-updates/auth"
+	"hyper-updates/challenge"
+	frpc "hyper-updates/cmd/token-faucet/rpc"
+	tconsts "hyper-updates/consts"
+	trpc "hyper-updates/rpc"
 )
 
 var keyCmd = &cobra.Command{

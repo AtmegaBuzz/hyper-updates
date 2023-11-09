@@ -1,4 +1,4 @@
-module github.com/ava-labs/hypersdk/examples/tokenvm
+module hyper-updates
 
 go 1.20
 

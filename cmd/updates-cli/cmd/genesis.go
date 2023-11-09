@@ -10,8 +10,9 @@ import (
 	"github.com/fatih/color"
 	"github.com/spf13/cobra"
 
+	"hyper-updates/genesis"
+
 	"github.com/ava-labs/hypersdk/chain"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/genesis"
 )
 
 var genesisCmd = &cobra.Command{

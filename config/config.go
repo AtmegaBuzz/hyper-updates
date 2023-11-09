@@ -18,8 +18,8 @@ import (
 	"github.com/ava-labs/hypersdk/trace"
 	"github.com/ava-labs/hypersdk/vm"
 
-	"github.com/ava-labs/hypersdk/examples/tokenvm/consts"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/version"
+	"hyper-updates/consts"
+	"hyper-updates/version"
 )
 
 var _ vm.Config = (*Config)(nil)

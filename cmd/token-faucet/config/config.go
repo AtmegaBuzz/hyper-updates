@@ -4,10 +4,11 @@
 package config
 
 import (
+	"hyper-updates/auth"
+	"hyper-updates/consts"
+
 	"github.com/ava-labs/hypersdk/codec"
 	"github.com/ava-labs/hypersdk/crypto/ed25519"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/auth"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/consts"
 )
 
 type Config struct {

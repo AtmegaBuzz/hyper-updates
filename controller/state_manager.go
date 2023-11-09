@@ -4,8 +4,9 @@
 package controller
 
 import (
+	"hyper-updates/storage"
+
 	"github.com/ava-labs/avalanchego/ids"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/storage"
 )
 
 type StateManager struct{}

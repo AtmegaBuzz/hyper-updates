@@ -13,7 +13,7 @@ set -o pipefail
 export CGO_CFLAGS="-O -D__BLST_PORTABLE__"
 
 # Root directory
-TOKENVM_PATH=$(
+HYPER_UPDATES_PATH=$(
     cd "$(dirname "${BASH_SOURCE[0]}")"
     cd .. && pwd
 )
@@ -27,29 +27,24 @@ if [[ $# -eq 1 ]]; then
 elif [[ $# -eq 0 ]]; then
     # Set default binary directory location
     name="tHBYNu8ikqo4MWMHehC9iKB9mR5tB3DWzbkYmTfe9buWQ5GZ8"
-    BINARY_PATH=$TOKENVM_PATH/build/$name
+    BINARY_PATH=$HYPER_UPDATES_PATH/build/$name
 else
-    echo "Invalid arguments to build tokenvm. Requires zero (default location) or one argument to specify binary location."
+    echo "Invalid arguments to build hyper updates. Requires zero (default location) or one argument to specify binary location."
     exit 1
 fi
 
-cd $TOKENVM_PATH
+cd $HYPER_UPDATES_PATH
 
-echo "Building tokenvm in $BINARY_PATH"
+echo "Building Hyper Updates in $BINARY_PATH"
 mkdir -p $(dirname $BINARY_PATH)
-go build -o $BINARY_PATH ./cmd/tokenvm
+go build -o $BINARY_PATH ./cmd/hyper-updates
 
-CLI_PATH=$TOKENVM_PATH/build/token-cli
+CLI_PATH=$HYPER_UPDATES_PATH/build/updates-cli
 echo "Building token-cli in $CLI_PATH"
 mkdir -p $(dirname $CLI_PATH)
-go build -o $CLI_PATH ./cmd/token-cli
+go build -o $CLI_PATH ./cmd/updates-cli
 
-FAUCET_PATH=$TOKENVM_PATH/build/token-faucet
+FAUCET_PATH=$HYPER_UPDATES_PATH/build/token-faucet
 echo "Building token-faucet in $FAUCET_PATH"
 mkdir -p $(dirname $FAUCET_PATH)
 go build -o $FAUCET_PATH ./cmd/token-faucet
-
-FEED_PATH=$TOKENVM_PATH/build/token-feed
-echo "Building token-feed in $FEED_PATH"
-mkdir -p $(dirname $FEED_PATH)
-go build -o $FEED_PATH ./cmd/token-feed

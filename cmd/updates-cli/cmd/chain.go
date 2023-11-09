@@ -11,7 +11,7 @@ import (
 	"github.com/ava-labs/hypersdk/chain"
 	"github.com/spf13/cobra"
 
-	trpc "github.com/ava-labs/hypersdk/examples/tokenvm/rpc"
+	trpc "hyper-updates/rpc"
 )
 
 var chainCmd = &cobra.Command{

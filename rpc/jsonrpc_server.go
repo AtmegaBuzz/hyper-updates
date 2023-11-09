@@ -8,11 +8,12 @@ import (
 
 	"github.com/ava-labs/avalanchego/ids"
 
+	"hyper-updates/consts"
+	"hyper-updates/genesis"
+	"hyper-updates/orderbook"
+
 	"github.com/ava-labs/hypersdk/chain"
 	"github.com/ava-labs/hypersdk/codec"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/consts"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/genesis"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/orderbook"
 )
 
 type JSONRPCServer struct {

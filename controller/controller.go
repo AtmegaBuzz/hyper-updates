@@ -19,15 +19,15 @@ import (
 	"github.com/ava-labs/hypersdk/vm"
 	"go.uber.org/zap"
 
-	"github.com/ava-labs/hypersdk/examples/tokenvm/actions"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/auth"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/config"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/consts"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/genesis"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/orderbook"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/rpc"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/storage"
-	"github.com/ava-labs/hypersdk/examples/tokenvm/version"
+	"hyper-updates/actions"
+	"hyper-updates/auth"
+	"hyper-updates/config"
+	"hyper-updates/consts"
+	"hyper-updates/genesis"
+	"hyper-updates/orderbook"
+	"hyper-updates/rpc"
+	"hyper-updates/storage"
+	"hyper-updates/version"
 )
 
 var _ vm.Controller = (*Controller)(nil)

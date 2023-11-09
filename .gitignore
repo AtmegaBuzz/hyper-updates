@@ -1,0 +1,4 @@
+.token-cli
+build
+*.test
+*.log
