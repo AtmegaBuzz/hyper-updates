@@ -1,4 +1,4 @@
-.token-cli
+.updates-cli
 build
 *.test
 *.log

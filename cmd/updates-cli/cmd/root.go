@@ -14,7 +14,7 @@ import (
 
 const (
 	fsModeWrite     = 0o600
-	defaultDatabase = ".token-cli"
+	defaultDatabase = ".updates-cli"
 	defaultGenesis  = "genesis.json"
 )
 
@@ -55,6 +55,7 @@ func init() {
 		actionCmd,
 		spamCmd,
 		prometheusCmd,
+		deployCmd,
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&dbPath,
@@ -165,6 +166,11 @@ func init() {
 
 		importAssetCmd,
 		exportAssetCmd,
+	)
+
+	// deploy
+	deployCmd.AddCommand(
+		createRepoCmd,
 	)
 
 	// spam

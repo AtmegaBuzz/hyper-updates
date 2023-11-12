@@ -34,3 +34,13 @@ const (
 	MaxMetadataSize = 256
 	MaxDecimals     = 9
 )
+
+// Project storage constants
+const (
+	ProjectNameUnits          = 500
+	ProjectLogoUnits          = 1000
+	ProjectDescriptionUnits   = 1000
+	ProjectOwnerUnits         = 33
+	createProjectID           = 9
+	CreateProjectComputeUnits = 20
+)
