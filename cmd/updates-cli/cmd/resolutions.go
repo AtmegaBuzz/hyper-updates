@@ -171,6 +171,9 @@ func handleTx(c *trpc.JSONRPCClient, tx *chain.Transaction, result *chain.Result
 				}
 				summaryStr += fmt.Sprintf(" | swap in: %s %s (%s) swap out: %s %s expiry: %d", utils.FormatBalance(wt.SwapIn, wt.Decimals), wt.Symbol, outputAssetID, utils.FormatBalance(wt.SwapOut, outDecimals), outSymbol, wt.SwapExpiry)
 			}
+
+		case *actions.CreateProject:
+			summaryStr = fmt.Sprintf("Project Id: %s Project Name: %s Project Owner: %s Project Logo: %s", tx.ID(), action.ProjectName, action.Owner, action.Logo)
 		}
 	}
 	utils.Outf(

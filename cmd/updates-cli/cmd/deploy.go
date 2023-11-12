@@ -2,10 +2,9 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"hyper-updates/actions"
-	tconsts "hyper-updates/consts"
 
-	"github.com/ava-labs/hypersdk/codec"
 	"github.com/spf13/cobra"
 )
 
@@ -75,7 +74,6 @@ var createRepoCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		owner := codec.MustAddressBech32(tconsts.HRP, priv.Address)
 
 		// Confirm action
 		cont, err := handler.Root().PromptContinue()
@@ -86,14 +84,14 @@ var createRepoCmd = &cobra.Command{
 		project := &actions.CreateProject{
 			ProjectName:        []byte(project_name),
 			ProjectDescription: []byte(project_description),
-			Owner:              []byte(owner),
+			Owner:              priv.Address,
 			Logo:               []byte(URL),
 		}
 
 		// Generate transaction
-		_, _id, err := sendAndWait(ctx, nil, project, cli, scli, tcli, factory, true)
+		_, id, err := sendAndWait(ctx, nil, project, cli, scli, tcli, factory, true)
 
-		// storage.StoreNFT(_id.String(), nft.ID, nft.Metadata, nft.Owner, nft.URL)
+		fmt.Println(id)
 
 		return err
 

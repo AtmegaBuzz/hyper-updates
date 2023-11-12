@@ -5,15 +5,16 @@ package actions
 
 // Note: Registry will error during initialization if a duplicate ID is assigned. We explicitly assign IDs to avoid accidental remapping.
 const (
-	burnAssetID   uint8 = 0
-	closeOrderID  uint8 = 1
-	createAssetID uint8 = 2
-	exportAssetID uint8 = 3
-	importAssetID uint8 = 4
-	createOrderID uint8 = 5
-	fillOrderID   uint8 = 6
-	mintAssetID   uint8 = 7
-	transferID    uint8 = 8
+	burnAssetID     uint8 = 0
+	closeOrderID    uint8 = 1
+	createAssetID   uint8 = 2
+	exportAssetID   uint8 = 3
+	importAssetID   uint8 = 4
+	createOrderID   uint8 = 5
+	fillOrderID     uint8 = 6
+	mintAssetID     uint8 = 7
+	transferID      uint8 = 8
+	createProjectID uint8 = 9
 )
 
 const (
@@ -41,6 +42,5 @@ const (
 	ProjectLogoUnits          = 1000
 	ProjectDescriptionUnits   = 1000
 	ProjectOwnerUnits         = 33
-	createProjectID           = 9
 	CreateProjectComputeUnits = 20
 )

@@ -6,6 +6,7 @@ package storage
 import (
 	"context"
 	"encoding/binary"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sync"
@@ -56,13 +57,18 @@ const (
 	feePrefix          = 0x6
 	incomingWarpPrefix = 0x7
 	outgoingWarpPrefix = 0x8
+	projectPrefix      = 0x9
 )
 
 const (
-	BalanceChunks uint16 = 1
-	AssetChunks   uint16 = 5
-	OrderChunks   uint16 = 2
-	LoanChunks    uint16 = 1
+	BalanceChunks            uint16 = 1
+	AssetChunks              uint16 = 5
+	OrderChunks              uint16 = 2
+	LoanChunks               uint16 = 1
+	ProjectNameChunks        uint16 = 500
+	ProjectLogoChunks        uint16 = 1000
+	ProjectDescriptionChunks uint16 = 1000
+	ProjectOwnerChunks       uint16 = 33
 )
 
 var (
@@ -603,4 +609,85 @@ func OutgoingWarpKeyPrefix(txID ids.ID) (k []byte) {
 	k[0] = outgoingWarpPrefix
 	copy(k[1:], txID[:])
 	return k
+}
+
+// [assetPrefix] + [address]
+func ProjectKey(project ids.ID) (k []byte) {
+	k = make([]byte, 1+consts.IDLen+consts.Uint16Len)
+	k[0] = projectPrefix
+	copy(k[1:], project[:])
+	binary.BigEndian.PutUint16(k[1+consts.IDLen:], ProjectDescriptionChunks)
+	return
+}
+
+func SetProject(
+	ctx context.Context,
+	mu state.Mutable,
+	project ids.ID,
+	project_name []byte,
+	project_description []byte,
+	owner codec.Address,
+	logo []byte,
+) error {
+
+	k := ProjectKey(project)
+
+	v := make([]byte, ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks)
+
+	copy(v[:ProjectNameChunks], project_name)
+	copy(v[ProjectNameChunks:ProjectNameChunks+ProjectDescriptionChunks], project_description)
+	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen], owner[:])
+	copy(v[ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks], logo)
+
+	return mu.Insert(ctx, k, v)
+}
+
+func GetAccountKYC(
+	ctx context.Context,
+	im state.Immutable,
+	project ids.ID,
+) (ProjectData, error) {
+
+	k := ProjectKey(project)
+	v, err := im.GetValue(ctx, k)
+
+	if errors.Is(err, database.ErrNotFound) {
+		return ProjectData{}, nil
+	}
+	if err != nil {
+		return ProjectData{}, nil
+	}
+
+	return ProjectData{
+		Key:                hex.EncodeToString(k),
+		ProjectName:        v[:ProjectNameChunks],
+		ProjectDescription: v[ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
+		Owner:              v[ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
+		Logo:               v[ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
+	}, err
+}
+
+func GetProjectFromState(
+	ctx context.Context,
+	f ReadState,
+	project ids.ID,
+) (bool, ProjectData, error) {
+
+	k := ProjectKey(project)
+	v, errs := f(ctx, [][]byte{k})
+
+	if errors.Is(errs[0], database.ErrNotFound) {
+		return false, ProjectData{}, nil
+	}
+	if errs[0] != nil {
+		return false, ProjectData{}, nil
+	}
+
+	return true, ProjectData{
+		Key:                hex.EncodeToString(k),
+		ProjectName:        v[0][:ProjectNameChunks],
+		ProjectDescription: v[0][ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
+		Owner:              v[0][ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
+		Logo:               v[0][ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
+	}, errs[0]
 }

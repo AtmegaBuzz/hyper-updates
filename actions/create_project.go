@@ -12,7 +12,6 @@ import (
 	"github.com/ava-labs/avalanchego/vms/platformvm/warp"
 	"github.com/ava-labs/hypersdk/chain"
 	"github.com/ava-labs/hypersdk/codec"
-	"github.com/ava-labs/hypersdk/consts"
 	"github.com/ava-labs/hypersdk/state"
 	"github.com/ava-labs/hypersdk/utils"
 )
@@ -20,10 +19,10 @@ import (
 var _ chain.Action = (*CreateAsset)(nil)
 
 type CreateProject struct {
-	ProjectName        []byte `json:"name"`
-	ProjectDescription []byte `json:"description"`
-	Owner              []byte `json:"owner"`
-	Logo               []byte `json:"url"`
+	ProjectName        []byte        `json:"name"`
+	ProjectDescription []byte        `json:"description"`
+	Owner              codec.Address `json:"owner"`
+	Logo               []byte        `json:"url"`
 }
 
 func (*CreateProject) GetTypeID() uint8 {
@@ -37,7 +36,7 @@ func (*CreateProject) StateKeys(_ chain.Auth, txID ids.ID) []string {
 }
 
 func (*CreateProject) StateKeysMaxChunks() []uint16 {
-	return []uint16{storage.AssetChunks}
+	return []uint16{storage.ProjectNameChunks, storage.ProjectNameChunks, storage.ProjectOwnerChunks, storage.ProjectLogoChunks}
 }
 
 func (*CreateProject) OutputsWarpMessage() bool {
@@ -65,7 +64,7 @@ func (c *CreateProject) Execute(
 
 	// It should only be possible to overwrite an existing asset if there is
 	// a hash collision.
-	if err := storage.SetAsset(ctx, mu, txID, c.Symbol, c.Decimals, c.Metadata, 0, auth.Actor(), false); err != nil {
+	if err := storage.SetProject(ctx, mu, txID, c.ProjectName, c.ProjectDescription, auth.Actor(), c.Logo); err != nil {
 		return false, CreateProjectComputeUnits, utils.ErrBytes(err), nil, nil
 	}
 	return true, CreateProjectComputeUnits, nil, nil, nil
@@ -78,11 +77,8 @@ func (*CreateProject) MaxComputeUnits(chain.Rules) uint64 {
 func (c *CreateProject) Size() int {
 	// TODO: add small bytes (smaller int prefix)
 	return (codec.BytesLen(c.ProjectName) +
-		consts.Uint8Len +
 		codec.BytesLen(c.ProjectDescription) +
-		consts.Uint8Len +
-		codec.BytesLen(c.Owner) +
-		consts.Uint8Len +
+		codec.AddressLen +
 		codec.BytesLen(c.Logo))
 
 }
@@ -90,7 +86,7 @@ func (c *CreateProject) Size() int {
 func (c *CreateProject) Marshal(p *codec.Packer) {
 	p.PackBytes(c.ProjectName)
 	p.PackBytes(c.ProjectDescription)
-	p.PackBytes(c.Owner)
+	p.PackAddress(c.Owner)
 	p.PackBytes(c.Logo)
 }
 
@@ -100,7 +96,7 @@ func UnmarshalCreateProject(p *codec.Packer, _ *warp.Message) (chain.Action, err
 
 	p.UnpackBytes(ProjectNameUnits, true, &create.ProjectName)
 	p.UnpackBytes(ProjectDescriptionUnits, true, &create.ProjectDescription)
-	p.UnpackBytes(ProjectOwnerUnits, true, &create.Owner)
+	p.UnpackAddress(&create.Owner)
 	p.UnpackBytes(ProjectLogoUnits, true, &create.Logo)
 
 	return &create, p.Err()

@@ -37,4 +37,5 @@ var (
 	OutputMustFill               = []byte("must fill request")
 	OutputWarpVerificationFailed = []byte("warp verification failed")
 	OutputInvalidDestination     = []byte("invalid destination")
+	OutputProjectCreated         = []byte("Project created")
 )
