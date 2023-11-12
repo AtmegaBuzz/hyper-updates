@@ -78,3 +78,11 @@ func (c *Controller) GetLoanFromState(
 ) (uint64, error) {
 	return storage.GetLoanFromState(ctx, c.inner.ReadState, asset, destination)
 }
+
+func (c *Controller) GetProjectFromState(
+	ctx context.Context,
+	project ids.ID,
+
+) (bool, storage.ProjectData, error) {
+	return storage.GetProjectFromState(ctx, c.inner.ReadState, project)
+}

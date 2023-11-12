@@ -8,6 +8,7 @@ import (
 
 	"hyper-updates/genesis"
 	"hyper-updates/orderbook"
+	"hyper-updates/storage"
 
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/avalanchego/trace"
@@ -33,4 +34,5 @@ type Controller interface {
 		error,
 	)
 	GetLoanFromState(context.Context, ids.ID, ids.ID) (uint64, error)
+	GetProjectFromState(context.Context, ids.ID) (bool, storage.ProjectData, error)
 }
