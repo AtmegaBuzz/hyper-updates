@@ -17,6 +17,7 @@ import (
 	_ "hyper-updates/registry" // ensure registry populated
 
 	"github.com/ava-labs/hypersdk/chain"
+	"github.com/ava-labs/hypersdk/codec"
 	"github.com/ava-labs/hypersdk/requester"
 	"github.com/ava-labs/hypersdk/rpc"
 	"github.com/ava-labs/hypersdk/utils"
@@ -246,4 +247,22 @@ func (cli *JSONRPCClient) Parser(ctx context.Context) (chain.Parser, error) {
 		return nil, err
 	}
 	return &Parser{cli.networkID, cli.chainID, g}, nil
+}
+
+func (cli *JSONRPCClient) Project(
+	ctx context.Context,
+	project ids.ID,
+	useCache bool,
+) ([]byte, []byte, []byte, codec.Address, []byte, error) {
+
+	resp := new(ProjectReply)
+	err := cli.requester.SendRequest(
+		ctx,
+		"project",
+		&ProjectArgs{
+			Project: project,
+		},
+		resp,
+	)
+	return resp.ID, resp.ProjectName, resp.ProjectDescription, resp.Owner, resp.Logo, err
 }

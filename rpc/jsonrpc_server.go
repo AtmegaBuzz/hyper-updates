@@ -187,3 +187,36 @@ func (j *JSONRPCServer) Loan(req *http.Request, args *LoanArgs, reply *LoanReply
 	reply.Amount = amount
 	return nil
 }
+
+type ProjectArgs struct {
+	Project ids.ID `json:"project"`
+}
+
+type ProjectReply struct {
+	ID                 []byte        `json:"ID"`
+	ProjectName        []byte        `json:"name"`
+	ProjectDescription []byte        `json:"description"`
+	Owner              codec.Address `json:"owner"`
+	Logo               []byte        `json:"url"`
+}
+
+func (j *JSONRPCServer) Project(req *http.Request, args *ProjectArgs, reply *ProjectReply) error {
+	ctx, span := j.c.Tracer().Start(req.Context(), "Server.Asset")
+	defer span.End()
+
+	exists, project, err := j.c.GetProjectFromState(ctx, args.Project)
+
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrAssetNotFound
+	}
+	reply.ID = []byte(project.Key)
+	reply.ProjectName = project.ProjectName
+	reply.ProjectDescription = project.ProjectDescription
+	reply.Logo = project.Logo
+	reply.Owner = codec.Address(project.Owner)
+	return err
+
+}
