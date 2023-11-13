@@ -173,7 +173,7 @@ func handleTx(c *trpc.JSONRPCClient, tx *chain.Transaction, result *chain.Result
 			}
 
 		case *actions.CreateProject:
-			summaryStr = fmt.Sprintf("Project Id: %s Project Name: %s Project Owner: %s Project Logo: %s", tx.ID(), action.ProjectName, action.Owner, action.Logo)
+			summaryStr = fmt.Sprintf("Project Id: %s Project Name: %s", tx.ID(), action.ProjectName)
 		}
 	}
 	utils.Outf(

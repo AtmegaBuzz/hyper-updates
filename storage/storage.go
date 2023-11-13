@@ -632,9 +632,9 @@ func SetProject(
 
 	k := ProjectKey(project)
 
-	v := make([]byte, ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks)
+	v := make([]byte, ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks)
 
-	copy(v[:ProjectNameChunks], project_name)
+	copy(v[:ProjectNameChunks], project_name[:])
 	copy(v[ProjectNameChunks:ProjectNameChunks+ProjectDescriptionChunks], project_description)
 	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen], owner[:])
 	copy(v[ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks], logo)
@@ -662,8 +662,8 @@ func GetAccountKYC(
 		Key:                hex.EncodeToString(k),
 		ProjectName:        v[:ProjectNameChunks],
 		ProjectDescription: v[ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
-		Owner:              v[ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
-		Logo:               v[ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
+		Owner:              v[ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen],
+		Logo:               v[ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks],
 	}, err
 }
 
@@ -687,7 +687,7 @@ func GetProjectFromState(
 		Key:                hex.EncodeToString(k),
 		ProjectName:        v[0][:ProjectNameChunks],
 		ProjectDescription: v[0][ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
-		Owner:              v[0][ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
-		Logo:               v[0][ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
+		Owner:              v[0][ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen],
+		Logo:               v[0][ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks],
 	}, errs[0]
 }

@@ -40,7 +40,7 @@ mkdir -p $(dirname $BINARY_PATH)
 go build -o $BINARY_PATH ./cmd/hyper-updates
 
 CLI_PATH=$HYPER_UPDATES_PATH/build/updates-cli
-echo "Building token-cli in $CLI_PATH"
+echo "Building updates-cli in $CLI_PATH"
 mkdir -p $(dirname $CLI_PATH)
 go build -o $CLI_PATH ./cmd/updates-cli
 

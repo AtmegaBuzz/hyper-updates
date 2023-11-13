@@ -19,4 +19,4 @@ rm -rf prometheus-2.43.0.linux-amd64
 /tmp/token-cli key import demo.pk
 
 # Start prometheus server
-tmux new-session -d -s prometheus '/tmp/token-cli prometheus generate --prometheus-open-browser=false --prometheus-start=true'
+tmux new-session -d -s prometheus '/tmp/updates-cli prometheus generate --prometheus-open-browser=false --prometheus-start=true'
