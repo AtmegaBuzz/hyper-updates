@@ -91,7 +91,32 @@ var createRepoCmd = &cobra.Command{
 		// Generate transaction
 		_, id, err := sendAndWait(ctx, nil, project, cli, scli, tcli, factory, true)
 
+		if err != nil {
+			fmt.Println("Error occured")
+		}
+
 		fmt.Println(id)
+
+		return err
+
+	},
+}
+
+var getRepoCmd = &cobra.Command{
+	Use: "get-repository",
+	RunE: func(*cobra.Command, []string) error {
+
+		ctx := context.Background()
+		_, _, _, _, _, tcli, err := handler.DefaultActor()
+		if err != nil {
+			return err
+		}
+
+		id, err := handler.Root().PromptID("Project Description")
+
+		ID, ProjectName, _, _, Logo, err := tcli.Project(ctx, id, false)
+
+		fmt.Println("Id: %s, Project Name: %s, Logo: %s", ID, ProjectName, Logo)
 
 		return err
 

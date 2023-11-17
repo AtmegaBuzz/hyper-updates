@@ -210,7 +210,7 @@ func (j *JSONRPCServer) Project(req *http.Request, args *ProjectArgs, reply *Pro
 		return err
 	}
 	if !exists {
-		return ErrAssetNotFound
+		return ErrProjectNotFound
 	}
 	reply.ID = []byte(project.Key)
 	reply.ProjectName = project.ProjectName

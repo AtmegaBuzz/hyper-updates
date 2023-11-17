@@ -6,7 +6,8 @@ package rpc
 import "errors"
 
 var (
-	ErrTxNotFound    = errors.New("tx not found")
-	ErrAssetNotFound = errors.New("asset not found")
-	ErrOrderNotFound = errors.New("order not found")
+	ErrTxNotFound      = errors.New("tx not found")
+	ErrAssetNotFound   = errors.New("asset not found")
+	ErrOrderNotFound   = errors.New("order not found")
+	ErrProjectNotFound = errors.New("project not found")
 )

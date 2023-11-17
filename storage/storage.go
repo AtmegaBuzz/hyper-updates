@@ -634,11 +634,13 @@ func SetProject(
 
 	v := make([]byte, ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks)
 
+	saddr, _ := codec.AddressBech32(tconsts.HRP, owner)
+
 	copy(v[:ProjectNameChunks], project_name[:])
 	copy(v[ProjectNameChunks:ProjectNameChunks+ProjectDescriptionChunks], project_description)
-	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen], owner[:])
+	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen], saddr)
 	copy(v[ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks], logo)
-
+	fmt.Println("Hello man ")
 	return mu.Insert(ctx, k, v)
 }
 

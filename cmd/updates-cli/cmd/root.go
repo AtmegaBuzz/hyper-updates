@@ -171,6 +171,7 @@ func init() {
 	// deploy
 	deployCmd.AddCommand(
 		createRepoCmd,
+		getRepoCmd,
 	)
 
 	// spam
