@@ -265,3 +265,22 @@ func (cli *JSONRPCClient) Project(
 	)
 	return resp.ID, resp.ProjectName, resp.ProjectDescription, resp.ProjectOwner, resp.Logo, err
 }
+
+func (cli *JSONRPCClient) Update(
+	ctx context.Context,
+	update ids.ID,
+	useCache bool,
+) ([]byte, []byte, []byte, []byte, []byte, uint8, uint8, error) {
+
+	resp := new(UpdateReply)
+	err := cli.requester.SendRequest(
+		ctx,
+		"update",
+		&UpdateArgs{
+			Update: update,
+		},
+		resp,
+	)
+
+	return resp.ID, resp.ProjectTxID, resp.UpdateExecutableHash, resp.UpdateIPFSUrl, resp.ForDeviceName, resp.UpdateVersion, resp.SuccessCount, err
+}

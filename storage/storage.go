@@ -58,17 +58,26 @@ const (
 	incomingWarpPrefix = 0x7
 	outgoingWarpPrefix = 0x8
 	projectPrefix      = 0x9
+	updatePrefix       = 0xA
 )
 
 const (
-	BalanceChunks            uint16 = 1
-	AssetChunks              uint16 = 5
-	OrderChunks              uint16 = 2
-	LoanChunks               uint16 = 1
+	BalanceChunks uint16 = 1
+	AssetChunks   uint16 = 5
+	OrderChunks   uint16 = 2
+	LoanChunks    uint16 = 1
+
 	ProjectNameChunks        uint16 = 32
 	ProjectLogoChunks        uint16 = 100
 	ProjectDescriptionChunks uint16 = 100
 	ProjectOwnerChunks       uint16 = 500
+
+	ProjectTxIDChunks             = 100
+	UpdateExecutableHashChunks    = 100
+	UpdateExecutableIPFSUrlChunks = 100
+	ForDeviceNameChunks           = 100
+	UpdateVersionUnitsChunks      = 1
+	SuccessCountUnitsChunks       = 1
 )
 
 var (
@@ -611,7 +620,7 @@ func OutgoingWarpKeyPrefix(txID ids.ID) (k []byte) {
 	return k
 }
 
-// [assetPrefix] + [address]
+// [projectPrefix] + [address]
 func ProjectKey(project ids.ID) (k []byte) {
 	k = make([]byte, 1+consts.IDLen+consts.Uint16Len)
 	k[0] = projectPrefix
@@ -640,33 +649,8 @@ func SetProject(
 	copy(v[ProjectNameChunks:ProjectNameChunks+ProjectDescriptionChunks], project_description[:])
 	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks], project_owner[:])
 	copy(v[ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks:ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks], logo[:])
-	fmt.Println("Hello man ")
+	fmt.Println("Project Added to the Chain State")
 	return mu.Insert(ctx, k, v)
-}
-
-func GetAccountKYC(
-	ctx context.Context,
-	im state.Immutable,
-	project ids.ID,
-) (ProjectData, error) {
-
-	k := ProjectKey(project)
-	v, err := im.GetValue(ctx, k)
-
-	if errors.Is(err, database.ErrNotFound) {
-		return ProjectData{}, nil
-	}
-	if err != nil {
-		return ProjectData{}, nil
-	}
-
-	return ProjectData{
-		Key:                hex.EncodeToString(k),
-		ProjectName:        v[:ProjectNameChunks],
-		ProjectDescription: v[ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
-		ProjectOwner:       v[ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
-		Logo:               v[ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
-	}, err
 }
 
 func GetProjectFromState(
@@ -691,5 +675,87 @@ func GetProjectFromState(
 		ProjectDescription: v[0][ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
 		ProjectOwner:       v[0][ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
 		Logo:               v[0][ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
+	}, errs[0]
+}
+
+// [updatePrefix] + [address]
+func UpdateKey(update ids.ID) (k []byte) {
+	k = make([]byte, 1+consts.IDLen+consts.Uint16Len)
+	k[0] = updatePrefix
+	copy(k[1:], update[:])
+	binary.BigEndian.PutUint16(k[1+consts.IDLen:], UpdateExecutableHashChunks)
+	return
+}
+
+// ProjectTxID          []byte `json:"project_id"` // reference to Project
+//
+//	UpdateExecutableHash []byte `json:"executable_hash"`
+//	UpdateIPFSUrl       []byte `json:"executable_ipfs_url"`
+//	ForDeviceName        []byte `json:"for_device_name"`
+//	UpdateVersion        uint8  `json:"version"`
+//	SuccessCount         uint8  `json:"success_count"`
+func SetUpdate(
+	ctx context.Context,
+	mu state.Mutable,
+	update ids.ID,
+	project_id []byte,
+	executable_hash []byte,
+	executable_ipfs_url []byte,
+	for_device_name []byte,
+	version uint8,
+	success_count uint8,
+) error {
+
+	k := UpdateKey(update)
+
+	v := make([]byte,
+		ProjectTxIDChunks+
+			UpdateExecutableHashChunks+
+			UpdateExecutableIPFSUrlChunks+
+			ForDeviceNameChunks+
+			UpdateVersionUnitsChunks+
+			SuccessCountUnitsChunks)
+
+	// saddr, _ := codec.AddressBech32(tconsts.HRP, owner)
+
+	copy(v[:ProjectTxIDChunks], project_id[:])
+
+	copy(v[ProjectTxIDChunks:ProjectTxIDChunks+UpdateExecutableHashChunks], executable_hash[:])
+
+	copy(v[ProjectTxIDChunks+UpdateExecutableHashChunks:ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks], executable_ipfs_url[:])
+
+	copy(v[ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks:ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks+ForDeviceNameChunks], for_device_name[:])
+
+	v[ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks+ForDeviceNameChunks] = version
+	v[ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks+ForDeviceNameChunks+UpdateVersionUnitsChunks] = success_count
+
+	fmt.Println("Update Added to the Chain State")
+	return mu.Insert(ctx, k, v)
+}
+
+func GetUpdateFromState(
+	ctx context.Context,
+	f ReadState,
+	update ids.ID,
+) (bool, UpdateData, error) {
+
+	k := UpdateKey(update)
+	v, errs := f(ctx, [][]byte{k})
+
+	if errors.Is(errs[0], database.ErrNotFound) {
+		return false, UpdateData{}, nil
+	}
+	if errs[0] != nil {
+		return false, UpdateData{}, nil
+	}
+
+	return true, UpdateData{
+		Key:                  hex.EncodeToString(k),
+		ProjectTxID:          v[0][:ProjectTxIDChunks],
+		UpdateExecutableHash: v[0][ProjectTxIDChunks : ProjectTxIDChunks+UpdateExecutableHashChunks],
+		UpdateIPFSUrl:        v[0][ProjectTxIDChunks+UpdateExecutableHashChunks : ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks],
+		ForDeviceName:        v[0][ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks : ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks+ForDeviceNameChunks],
+		UpdateVersion:        v[0][ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks+ForDeviceNameChunks],
+		SuccessCount:         v[0][ProjectTxIDChunks+UpdateExecutableHashChunks+UpdateExecutableIPFSUrlChunks+ForDeviceNameChunks+UpdateVersionUnitsChunks],
 	}, errs[0]
 }

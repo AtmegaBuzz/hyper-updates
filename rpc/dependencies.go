@@ -35,4 +35,5 @@ type Controller interface {
 	)
 	GetLoanFromState(context.Context, ids.ID, ids.ID) (uint64, error)
 	GetProjectFromState(context.Context, ids.ID) (bool, storage.ProjectData, error)
+	GetUpdateFromState(context.Context, ids.ID) (bool, storage.UpdateData, error)
 }

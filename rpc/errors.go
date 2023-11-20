@@ -10,4 +10,5 @@ var (
 	ErrAssetNotFound   = errors.New("asset not found")
 	ErrOrderNotFound   = errors.New("order not found")
 	ErrProjectNotFound = errors.New("project not found")
+	ErrUpdateNotFound  = errors.New("update not found")
 )

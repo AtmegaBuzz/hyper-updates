@@ -220,3 +220,43 @@ func (j *JSONRPCServer) Project(req *http.Request, args *ProjectArgs, reply *Pro
 	return err
 
 }
+
+type UpdateArgs struct {
+	Update ids.ID `json:"update"`
+}
+
+type UpdateReply struct {
+	ID                   []byte `json:"ID"`
+	ProjectTxID          []byte `json:"project_id"` // reference to Project
+	UpdateExecutableHash []byte `json:"executable_hash"`
+	UpdateIPFSUrl        []byte `json:"executable_ipfs_url"`
+	ForDeviceName        []byte `json:"for_device_name"`
+	UpdateVersion        uint8  `json:"version"`
+	SuccessCount         uint8  `json:"success_count"`
+}
+
+func (j *JSONRPCServer) Update(req *http.Request, args *UpdateArgs, reply *UpdateReply) error {
+
+	ctx, span := j.c.Tracer().Start(req.Context(), "Server.Update")
+	defer span.End()
+
+	exists, update, err := j.c.GetUpdateFromState(ctx, args.Update)
+
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return ErrUpdateNotFound
+	}
+
+	reply.ID = []byte(update.Key)
+	reply.ProjectTxID = []byte(update.ProjectTxID)
+	reply.UpdateExecutableHash = []byte(update.UpdateExecutableHash)
+	reply.UpdateIPFSUrl = []byte(update.UpdateIPFSUrl)
+	reply.ForDeviceName = []byte(update.ForDeviceName)
+	reply.UpdateVersion = uint8(update.UpdateVersion)
+	reply.SuccessCount = uint8(update.SuccessCount)
+
+	return err
+
+}
