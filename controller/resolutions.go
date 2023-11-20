@@ -86,3 +86,11 @@ func (c *Controller) GetProjectFromState(
 ) (bool, storage.ProjectData, error) {
 	return storage.GetProjectFromState(ctx, c.inner.ReadState, project)
 }
+
+func (c *Controller) GetUpdateFromState(
+	ctx context.Context,
+	update ids.ID,
+
+) (bool, storage.UpdateData, error) {
+	return storage.GetUpdateFromState(ctx, c.inner.ReadState, update)
+}

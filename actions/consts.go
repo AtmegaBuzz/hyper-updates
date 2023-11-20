@@ -15,6 +15,7 @@ const (
 	mintAssetID     uint8 = 7
 	transferID      uint8 = 8
 	createProjectID uint8 = 9
+	createUpdateID  uint8 = 10
 )
 
 const (
@@ -43,4 +44,15 @@ const (
 	ProjectDescriptionUnits   = 100
 	ProjectOwnerUnits         = 500
 	CreateProjectComputeUnits = 5
+)
+
+// Update storage constants
+const (
+	ProjectTxIDUnits          = 100
+	UpdateExecutableHashUnits = 100
+	UpdateExecutableIPFSUrl   = 100
+	ForDeviceNameUnits        = 100
+	UpdateVersionUnits        = 1
+	SuccessCountUnits         = 1
+	CreateUpdateComputeUnits  = 5
 )
