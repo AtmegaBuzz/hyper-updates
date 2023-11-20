@@ -6,6 +6,7 @@ package actions
 import (
 	"context"
 
+	"hyper-updates/consts"
 	"hyper-updates/storage"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -16,13 +17,12 @@ import (
 	"github.com/ava-labs/hypersdk/utils"
 )
 
-var _ chain.Action = (*CreateAsset)(nil)
+var _ chain.Action = (*CreateProject)(nil)
 
 type CreateProject struct {
-	ProjectName        []byte        `json:"name"`
-	ProjectDescription []byte        `json:"description"`
-	Owner              codec.Address `json:"owner"`
-	Logo               []byte        `json:"url"`
+	ProjectName        []byte `json:"name"`
+	ProjectDescription []byte `json:"description"`
+	Logo               []byte `json:"url"`
 }
 
 func (*CreateProject) GetTypeID() uint8 {
@@ -31,12 +31,12 @@ func (*CreateProject) GetTypeID() uint8 {
 
 func (*CreateProject) StateKeys(_ chain.Auth, txID ids.ID) []string {
 	return []string{
-		string(storage.AssetKey(txID)),
+		string(storage.ProjectKey(txID)),
 	}
 }
 
 func (*CreateProject) StateKeysMaxChunks() []uint16 {
-	return []uint16{storage.ProjectNameChunks, storage.ProjectNameChunks, storage.ProjectOwnerChunks, storage.ProjectLogoChunks}
+	return []uint16{storage.ProjectDescriptionChunks}
 }
 
 func (*CreateProject) OutputsWarpMessage() bool {
@@ -53,18 +53,21 @@ func (c *CreateProject) Execute(
 	_ bool,
 ) (bool, uint64, []byte, *warp.UnsignedMessage, error) {
 	if len(c.ProjectName) == 0 {
-		return false, CreateProjectComputeUnits, OutputSymbolEmpty, nil, nil
+		return false, CreateProjectComputeUnits, OutputProjectNameNotGiven, nil, nil
 	}
 	if len(c.ProjectDescription) == 0 {
-		return false, CreateAssetComputeUnits, OutputSymbolTooLarge, nil, nil
+		return false, CreateAssetComputeUnits, OutputProjectDescriptionNotGiven, nil, nil
 	}
-	if len(c.Owner) == 0 {
-		return false, CreateProjectComputeUnits, OutputDecimalsTooLarge, nil, nil
+
+	owner, err := codec.AddressBech32(consts.HRP, auth.Actor())
+
+	if err != nil {
+		return false, CreateAssetComputeUnits, OutputProjectInvalidOwner, nil, nil
 	}
 
 	// It should only be possible to overwrite an existing asset if there is
 	// a hash collision.
-	if err := storage.SetProject(ctx, mu, txID, c.ProjectName, c.ProjectDescription, auth.Actor(), c.Logo); err != nil {
+	if err := storage.SetProject(ctx, mu, txID, c.ProjectName, c.ProjectDescription, []byte(owner), c.Logo); err != nil {
 		return false, CreateProjectComputeUnits, utils.ErrBytes(err), nil, nil
 	}
 	return true, CreateProjectComputeUnits, nil, nil, nil
@@ -78,7 +81,6 @@ func (c *CreateProject) Size() int {
 	// TODO: add small bytes (smaller int prefix)
 	return (codec.BytesLen(c.ProjectName) +
 		codec.BytesLen(c.ProjectDescription) +
-		codec.AddressLen +
 		codec.BytesLen(c.Logo))
 
 }
@@ -86,7 +88,6 @@ func (c *CreateProject) Size() int {
 func (c *CreateProject) Marshal(p *codec.Packer) {
 	p.PackBytes(c.ProjectName)
 	p.PackBytes(c.ProjectDescription)
-	p.PackAddress(c.Owner)
 	p.PackBytes(c.Logo)
 }
 
@@ -96,7 +97,6 @@ func UnmarshalCreateProject(p *codec.Packer, _ *warp.Message) (chain.Action, err
 
 	p.UnpackBytes(ProjectNameUnits, true, &create.ProjectName)
 	p.UnpackBytes(ProjectDescriptionUnits, true, &create.ProjectDescription)
-	p.UnpackAddress(&create.Owner)
 	p.UnpackBytes(ProjectLogoUnits, true, &create.Logo)
 
 	return &create, p.Err()

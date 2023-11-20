@@ -38,9 +38,9 @@ const (
 
 // Project storage constants
 const (
-	ProjectNameUnits          = 500
-	ProjectLogoUnits          = 1000
-	ProjectDescriptionUnits   = 1000
-	ProjectOwnerUnits         = 33
-	CreateProjectComputeUnits = 20
+	ProjectNameUnits          = 32
+	ProjectLogoUnits          = 100
+	ProjectDescriptionUnits   = 100
+	ProjectOwnerUnits         = 500
+	CreateProjectComputeUnits = 5
 )

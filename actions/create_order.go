@@ -60,7 +60,7 @@ func (c *CreateOrder) StateKeys(auth chain.Auth, txID ids.ID) []string {
 }
 
 func (*CreateOrder) StateKeysMaxChunks() []uint16 {
-	return []uint16{storage.BalanceChunks, storage.OrderChunks}
+	return []uint16{5}
 }
 
 func (*CreateOrder) OutputsWarpMessage() bool {

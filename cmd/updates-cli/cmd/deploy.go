@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"hyper-updates/actions"
+	"hyper-updates/consts"
 
+	"github.com/ava-labs/hypersdk/codec"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +59,8 @@ var createRepoCmd = &cobra.Command{
 		// 	"fc43a725fd778580045c",
 		// 	"37c52b3571d7df2c1326c1460a1b192c209a1fb212c6b1b96eb2626bb2076efe",
 		// )
-		URL := "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png"
+		// URL := "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/1200px-Google_2015_logo.svg.png"
+		URL := "https://upload.wikimedia.org"
 
 		if err != nil {
 			return err
@@ -70,10 +73,10 @@ var createRepoCmd = &cobra.Command{
 		}
 
 		// get current auth user
-		_, priv, _, _, _, _, err := handler.DefaultActor()
-		if err != nil {
-			return err
-		}
+		// _, priv, _, _, _, _, err := handler.DefaultActor()
+		// if err != nil {
+		// 	return err
+		// }
 
 		// Confirm action
 		cont, err := handler.Root().PromptContinue()
@@ -84,7 +87,6 @@ var createRepoCmd = &cobra.Command{
 		project := &actions.CreateProject{
 			ProjectName:        []byte(project_name),
 			ProjectDescription: []byte(project_description),
-			Owner:              priv.Address,
 			Logo:               []byte(URL),
 		}
 
@@ -114,9 +116,12 @@ var getRepoCmd = &cobra.Command{
 
 		id, err := handler.Root().PromptID("Project Description")
 
-		ID, ProjectName, _, _, Logo, err := tcli.Project(ctx, id, false)
+		ID, ProjectName, ProjectDescription, ProjectOwner, Logo, err := tcli.Project(ctx, id, false)
 
-		fmt.Println("Id: %s, Project Name: %s, Logo: %s", ID, ProjectName, Logo)
+		addr, err := codec.AddressBech32(consts.HRP, codec.Address(ID))
+		// owner, err := codec.AddressBech32(consts.HRP, codec.Address(ProjectOwner))
+
+		fmt.Println("Id: ", addr, ", Project Name: ", string(ProjectName), ", Project Logo: ", string(Logo), ", Project Description: ", string(ProjectDescription), ", Project Owner: ", string(ProjectOwner))
 
 		return err
 

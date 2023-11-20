@@ -193,15 +193,15 @@ type ProjectArgs struct {
 }
 
 type ProjectReply struct {
-	ID                 []byte        `json:"ID"`
-	ProjectName        []byte        `json:"name"`
-	ProjectDescription []byte        `json:"description"`
-	Owner              codec.Address `json:"owner"`
-	Logo               []byte        `json:"url"`
+	ID                 []byte `json:"ID"`
+	ProjectName        []byte `json:"name"`
+	ProjectDescription []byte `json:"description"`
+	ProjectOwner       []byte `json:"owner"`
+	Logo               []byte `json:"logo"`
 }
 
 func (j *JSONRPCServer) Project(req *http.Request, args *ProjectArgs, reply *ProjectReply) error {
-	ctx, span := j.c.Tracer().Start(req.Context(), "Server.Asset")
+	ctx, span := j.c.Tracer().Start(req.Context(), "Server.Project")
 	defer span.End()
 
 	exists, project, err := j.c.GetProjectFromState(ctx, args.Project)
@@ -215,8 +215,8 @@ func (j *JSONRPCServer) Project(req *http.Request, args *ProjectArgs, reply *Pro
 	reply.ID = []byte(project.Key)
 	reply.ProjectName = project.ProjectName
 	reply.ProjectDescription = project.ProjectDescription
+	reply.ProjectOwner = project.ProjectOwner
 	reply.Logo = project.Logo
-	reply.Owner = codec.Address(project.Owner)
 	return err
 
 }

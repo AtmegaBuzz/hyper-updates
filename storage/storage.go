@@ -65,10 +65,10 @@ const (
 	AssetChunks              uint16 = 5
 	OrderChunks              uint16 = 2
 	LoanChunks               uint16 = 1
-	ProjectNameChunks        uint16 = 500
-	ProjectLogoChunks        uint16 = 1000
-	ProjectDescriptionChunks uint16 = 1000
-	ProjectOwnerChunks       uint16 = 33
+	ProjectNameChunks        uint16 = 32
+	ProjectLogoChunks        uint16 = 100
+	ProjectDescriptionChunks uint16 = 100
+	ProjectOwnerChunks       uint16 = 500
 )
 
 var (
@@ -626,20 +626,20 @@ func SetProject(
 	project ids.ID,
 	project_name []byte,
 	project_description []byte,
-	owner codec.Address,
+	project_owner []byte,
 	logo []byte,
 ) error {
 
 	k := ProjectKey(project)
 
-	v := make([]byte, ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks)
+	v := make([]byte, ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks)
 
-	saddr, _ := codec.AddressBech32(tconsts.HRP, owner)
+	// saddr, _ := codec.AddressBech32(tconsts.HRP, owner)
 
 	copy(v[:ProjectNameChunks], project_name[:])
-	copy(v[ProjectNameChunks:ProjectNameChunks+ProjectDescriptionChunks], project_description)
-	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen], saddr)
-	copy(v[ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen:ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks], logo)
+	copy(v[ProjectNameChunks:ProjectNameChunks+ProjectDescriptionChunks], project_description[:])
+	copy(v[ProjectNameChunks+ProjectDescriptionChunks:ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks], project_owner[:])
+	copy(v[ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks:ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks], logo[:])
 	fmt.Println("Hello man ")
 	return mu.Insert(ctx, k, v)
 }
@@ -664,8 +664,8 @@ func GetAccountKYC(
 		Key:                hex.EncodeToString(k),
 		ProjectName:        v[:ProjectNameChunks],
 		ProjectDescription: v[ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
-		Owner:              v[ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen],
-		Logo:               v[ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks],
+		ProjectOwner:       v[ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
+		Logo:               v[ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
 	}, err
 }
 
@@ -689,7 +689,7 @@ func GetProjectFromState(
 		Key:                hex.EncodeToString(k),
 		ProjectName:        v[0][:ProjectNameChunks],
 		ProjectDescription: v[0][ProjectNameChunks : ProjectNameChunks+ProjectDescriptionChunks],
-		Owner:              v[0][ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen],
-		Logo:               v[0][ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen : ProjectNameChunks+ProjectDescriptionChunks+codec.AddressLen+ProjectLogoChunks],
+		ProjectOwner:       v[0][ProjectNameChunks+ProjectDescriptionChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks],
+		Logo:               v[0][ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks : ProjectNameChunks+ProjectDescriptionChunks+ProjectOwnerChunks+ProjectLogoChunks],
 	}, errs[0]
 }
