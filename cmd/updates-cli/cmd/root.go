@@ -174,6 +174,7 @@ func init() {
 		getRepoCmd,
 		createUpdateCmd,
 		getUpdateCmd,
+		startServer,
 	)
 
 	// spam
