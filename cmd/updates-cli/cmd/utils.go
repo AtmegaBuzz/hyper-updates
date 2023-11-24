@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"bytes"
@@ -9,13 +9,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"crypto/md5"
+	"encoding/hex"
 )
 
 type PinataResponse struct {
 	IpfsHash string `json:"IpfsHash"`
 }
 
-func deployPinata(filePath, apiKey, secretApiKey string) (string, error) {
+func DeployBin(filePath, apiKey, secretApiKey string) (string, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return "", err
@@ -75,4 +78,24 @@ func deployPinata(filePath, apiKey, secretApiKey string) (string, error) {
 	imageUrl := "https://ipfs.io/ipfs/" + pinataResponse.IpfsHash
 
 	return imageUrl, nil
+}
+
+func CalculateMD5(filePath string) (string, error) {
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hash := md5.New()
+
+	if _, err := io.Copy(hash, file); err != nil {
+		return "", err
+	}
+
+	hashInBytes := hash.Sum(nil)
+	hashString := hex.EncodeToString(hashInBytes)
+
+	return hashString, nil
 }

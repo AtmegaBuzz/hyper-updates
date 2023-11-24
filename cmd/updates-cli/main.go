@@ -14,8 +14,9 @@ import (
 
 func main() {
 	if err := cmd.Execute(); err != nil {
-		utils.Outf("{{red}}token-cli exited with error:{{/}} %+v\n", err)
+		utils.Outf("{{red}}Updates-cli exited with error:{{/}} %+v\n", err)
 		os.Exit(1)
 	}
+
 	os.Exit(0)
 }

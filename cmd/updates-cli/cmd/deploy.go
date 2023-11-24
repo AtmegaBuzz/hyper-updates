@@ -110,15 +110,28 @@ var createUpdateCmd = &cobra.Command{
 			return err
 		}
 
-		executable_hash, err := handler.Root().PromptString("Executable Hash", 1, 500)
+		executable_path, err := handler.Root().PromptString("Executable Path", 1, 500)
 		if err != nil {
 			return err
 		}
 
-		executable_ipfs_url, err := handler.Root().PromptString("Executable IPFS URL", 1, 500)
+		executable_ipfs_url, err := DeployBin(
+			executable_path,
+			"fc43a725fd778580045c",
+			"37c52b3571d7df2c1326c1460a1b192c209a1fb212c6b1b96eb2626bb2076efe",
+		)
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("Binary Upload completed")
+
+		executable_hash, err := CalculateMD5(executable_path)
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("Hash Calculated")
 
 		for_device_name, err := handler.Root().PromptString("Update For Device (Name)", 1, 100)
 		if err != nil {
