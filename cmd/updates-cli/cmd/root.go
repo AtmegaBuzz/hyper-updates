@@ -56,6 +56,7 @@ func init() {
 		spamCmd,
 		prometheusCmd,
 		deployCmd,
+		serverCmd,
 	)
 	rootCmd.PersistentFlags().StringVar(
 		&dbPath,

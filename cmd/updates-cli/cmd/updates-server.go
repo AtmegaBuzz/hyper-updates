@@ -4,7 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hyper-updates/actions"
+	"io"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 
 	"github.com/ava-labs/avalanchego/ids"
@@ -121,25 +125,163 @@ func GetUpdateHash(ctx context.Context) http.HandlerFunc {
 
 }
 
+type ProjectInfo struct {
+	ProjectName        string `json:"project_name"`
+	ProjectDescription string `json:"project_description"`
+	URL                string `json:"project_logo"`
+}
+
+func CreateRepositoryHandler(ctx context.Context) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		_, _, factory, cli, scli, tcli, err := handler.DefaultActor()
+
+		body, err := io.ReadAll(r.Body)
+
+		if err != nil {
+			http.Error(w, "Error reading request body", http.StatusBadRequest)
+			return
+		}
+
+		var projectInfo ProjectInfo
+		if err := json.Unmarshal(body, &projectInfo); err != nil {
+			http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+			return
+		}
+
+		project := &actions.CreateProject{
+			ProjectName:        []byte(projectInfo.ProjectName),
+			ProjectDescription: []byte(projectInfo.ProjectDescription),
+			Logo:               []byte(projectInfo.URL),
+		}
+
+		// Generate transaction
+		_, id, err := sendAndWait(ctx, nil, project, cli, scli, tcli, factory, true)
+
+		response := ""
+		if err != nil {
+			http.Error(w, "Error while creating Repository", http.StatusInternalServerError)
+		}
+
+		response = id.String()
+
+		w.Header().Set("Content-Type", "application/json")
+
+		// w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+
+	}
+
+}
+
+func cleanupFile(file *os.File) {
+	// Cleanup logic
+	err := os.Remove(file.Name())
+	if err != nil {
+		fmt.Println("Error deleting file:", err)
+		return
+	}
+	fmt.Println("File deleted successfully.")
+}
+
+func CreateUpdateHandler(ctx context.Context) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		_, _, factory, cli, scli, tcli, err := handler.DefaultActor()
+
+		err_mparse := r.ParseMultipartForm(10 << 20) // 10 MB limit for the entire request
+		if err_mparse != nil {
+			http.Error(w, "Unable to parse form", http.StatusBadRequest)
+			return
+		}
+
+		// Extract form values
+		projectID := r.FormValue("project_id")
+		forDeviceName := r.FormValue("for_device_name")
+		version, _ := strconv.ParseUint(r.FormValue("version"), 10, 8)
+
+		// Get a reference to the uploaded file
+		file, fileHeader, err := r.FormFile("executable_file")
+		if err != nil {
+			http.Error(w, "Unable to get file from request", http.StatusBadRequest)
+			return
+		}
+		defer file.Close()
+
+		// Create a new file on the server
+		dst, err := os.Create(fileHeader.Filename)
+		if err != nil {
+			http.Error(w, "Unable to create file on server", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+
+		// Copy the uploaded file to the new file
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			http.Error(w, "Unable to copy file", http.StatusInternalServerError)
+			return
+		}
+
+		executable_ipfs_url, err := DeployBin(
+			fileHeader.Filename,
+			"fc43a725fd778580045c",
+			"37c52b3571d7df2c1326c1460a1b192c209a1fb212c6b1b96eb2626bb2076efe",
+		)
+
+		executable_hash, err := CalculateMD5(fileHeader.Filename)
+
+		if err != nil {
+			http.Error(w, "Cannot upload file to IPFS", http.StatusInternalServerError)
+		}
+		// Print received data
+		fmt.Printf("Received data:\nProject ID: %s\nDevice Name: %s\nVersion: %s\n",
+			projectID, forDeviceName, version)
+
+		// File cleanup using defer
+		defer cleanupFile(dst)
+
+		update := &actions.CreateUpdate{
+			ProjectTxID:          []byte(projectID),
+			UpdateExecutableHash: []byte(executable_hash),
+			UpdateIPFSUrl:        []byte(executable_ipfs_url),
+			ForDeviceName:        []byte(forDeviceName),
+			UpdateVersion:        uint8(version),
+			SuccessCount:         0,
+		}
+
+		// Generate transaction
+		_, id, err := sendAndWait(ctx, nil, update, cli, scli, tcli, factory, true)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("File uploaded successfully: " + id.String()))
+
+	}
+
+}
+
 var startServer = &cobra.Command{
-	Use: "start-server",
+	Use: "start",
 	RunE: func(*cobra.Command, []string) error {
 
 		ctx := context.Background()
 
-		// Register the handler function for the root ("/") route
 		http.HandleFunc("/", GetUpdateDataHandler(ctx))
+		http.HandleFunc("/create-repository", CreateRepositoryHandler(ctx))
+		http.HandleFunc("/create-update", CreateUpdateHandler(ctx))
 		http.HandleFunc("/check-hash", GetUpdateHash(ctx))
 
 		// Start the HTTP server on port 8080
 		fmt.Println("Server is listening on port 8080...")
 		err_http := http.ListenAndServe(":8080", nil)
+		fmt.Println("Server Ended")
 
 		if err_http != nil {
 			return err_http
 		}
 
 		return err_http
-
 	},
 }
