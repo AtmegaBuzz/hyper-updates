@@ -2,14 +2,10 @@ package cmd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"hyper-updates/actions"
 	"hyper-updates/consts"
-	"net/http"
-	"strings"
 
-	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/hypersdk/codec"
 	"github.com/spf13/cobra"
 )
@@ -187,82 +183,6 @@ var getUpdateCmd = &cobra.Command{
 		addr, err := codec.AddressBech32(consts.HRP, codec.Address(ID))
 
 		fmt.Println("Id: ", addr, ", Project Tx Id: ", string(ProjectTxID), ", Exe Hash: ", string(UpdateExecutableHash), ", Ipfs URL: ", string(UpdateIPFSUrl), ", For Devide: ", string(ForDeviceName), ", Version: ", UpdateVersion, ", Success: ", SuccessCount)
-
-		return err
-
-	},
-}
-
-func trimNullChars(s string) string {
-
-	t := strings.TrimRight(s, "\x00")
-	u := strings.TrimLeft(t, "\x00")
-
-	return u
-}
-
-var startServer = &cobra.Command{
-	Use: "start-server",
-	RunE: func(*cobra.Command, []string) error {
-
-		ctx := context.Background()
-		_, _, _, _, _, tcli, err := handler.DefaultActor()
-		if err != nil {
-			return err
-		}
-
-		handler := func(w http.ResponseWriter, r *http.Request) {
-
-			t := r.URL.Query().Get("transactionid")
-			transactionId, err := ids.FromString(t)
-
-			if err != nil {
-
-				fmt.Fprintln(w, "Invalid Id Passed")
-				response := map[string]interface{}{
-					"status": "failed",
-				}
-
-				w.Header().Set("Content-Type", "application/json")
-				// w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(response)
-
-			} else {
-
-				_, ProjectTxID, UpdateExecutableHash, UpdateIPFSUrl, ForDeviceName, UpdateVersion, _, err := tcli.Update(ctx, transactionId, false)
-
-				if err != nil {
-					fmt.Fprintln(w, "Server Error")
-				}
-
-				response := map[string]interface{}{
-					"ProjectTxID":          trimNullChars(string(ProjectTxID)),
-					"UpdateExecutableHash": trimNullChars(string(UpdateExecutableHash)),
-					"UpdateIPFSUrl":        trimNullChars(string(UpdateIPFSUrl)),
-					"ForDeviceName":        trimNullChars(string(ForDeviceName)),
-					"UpdateVersion":        UpdateVersion,
-					"status":               "success",
-				}
-				fmt.Println("Project Tx Id: ", string(ProjectTxID), ", Exe Hash: ", string(UpdateExecutableHash), ", Ipfs URL: ", string(UpdateIPFSUrl), ", For Devide: ", string(ForDeviceName), ", Version: ", UpdateVersion)
-				w.Header().Set("Content-Type", "application/json")
-
-				// w.WriteHeader(http.StatusOK)
-				json.NewEncoder(w).Encode(response)
-
-			}
-
-		}
-
-		// Register the handler function for the root ("/") route
-		http.HandleFunc("/", handler)
-
-		// Start the HTTP server on port 8080
-		fmt.Println("Server is listening on port 8080...")
-		err_http := http.ListenAndServe(":8080", nil)
-
-		if err_http != nil {
-			return err
-		}
 
 		return err
 

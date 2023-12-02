@@ -174,6 +174,10 @@ func init() {
 		getRepoCmd,
 		createUpdateCmd,
 		getUpdateCmd,
+	)
+
+	// server
+	serverCmd.AddCommand(
 		startServer,
 	)
 
