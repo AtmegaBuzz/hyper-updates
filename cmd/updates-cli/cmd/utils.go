@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/go-resty/resty/v2"
 
 	"crypto/md5"
 	"encoding/hex"
@@ -98,4 +101,46 @@ func CalculateMD5(filePath string) (string, error) {
 	hashString := hex.EncodeToString(hashInBytes)
 
 	return hashString, nil
+}
+
+func downloadIPFSFile(filepath string, url string) (err error) {
+
+	// Create a Resty client
+	client := resty.New()
+
+	// Perform the HTTP GET request
+	resp, err := client.R().
+		Get(url)
+
+	// Check for errors
+	if err != nil {
+		fmt.Println("Error:", err)
+		return err
+	}
+
+	// Check the response status code
+	if resp.StatusCode() != 200 {
+		fmt.Println("Error: Non-200 status code received")
+		return ErrInsufficientSupply
+	}
+
+	// Save the response body to a file
+	err = ioutil.WriteFile(filepath, resp.Body(), 0644)
+	if err != nil {
+		fmt.Println("Error saving file:", err)
+		return err
+	}
+
+	fmt.Println("File downloaded successfully:", filepath)
+
+	return nil
+}
+
+func deleteFile(filePath string) error {
+	err := os.Remove(filePath)
+	if err != nil {
+		return fmt.Errorf("error deleting file: %v", err)
+	}
+	fmt.Println("File deleted successfully:", filePath)
+	return nil
 }

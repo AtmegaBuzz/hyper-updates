@@ -1,11 +1,14 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
 	"hyper-updates/actions"
 	"io"
+	"io/ioutil"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
@@ -262,6 +265,177 @@ func CreateUpdateHandler(ctx context.Context) http.HandlerFunc {
 
 }
 
+type PushUpdateInfo struct {
+	UpdateTx string `json:"update-tx"`
+	DeviceIp string `json:"device-ip"`
+}
+
+func pushFirmwareHash(hash, filePath, deviceIp string) error {
+
+	url := "http://" + deviceIp + "/ota/start?mode=fr&hash=" + hash
+
+	// Create the request
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return err
+	}
+
+	// Set the necessary headers
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:120.0) Gecko/20100101 Firefox/120.0")
+	request.Header.Set("Accept", "*/*")
+	request.Header.Set("Accept-Language", "en-US,en;q=0.5")
+	request.Header.Set("Accept-Encoding", "gzip, deflate")
+	request.Header.Set("Referer", "http://192.168.0.6/update")
+	request.Header.Set("Connection", "keep-alive")
+
+	// Make the request
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return err
+	}
+	defer response.Body.Close()
+
+	// Print the response status and headers
+	fmt.Println("Response Status:", response.Status)
+	fmt.Println("Response Headers:", response.Header)
+
+	// You can read and print the response body if needed
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return err
+	}
+	fmt.Println("Response Body:", string(body))
+
+	return nil
+
+}
+
+func PushFirmwareUpdate(deviceIp string, filePath string, w http.ResponseWriter) error {
+
+	url := "http://" + deviceIp + "/ota/upload"
+
+	// Create a buffer to store the request body
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	// Add the file to the request body
+	file, err := os.Open(filePath)
+	if err != nil {
+		http.Error(w, "Error Opening file", http.StatusInternalServerError)
+		return err
+	}
+	defer file.Close()
+
+	fileWriter, err := writer.CreateFormFile("file", "firmware.bin")
+	if err != nil {
+		fmt.Println("Error creating form file:", err)
+		return err
+	}
+
+	_, err = io.Copy(fileWriter, file)
+	if err != nil {
+		fmt.Println("Error copying file content:", err)
+		return err
+	}
+
+	// Close the multipart writer to finalize the request body
+	writer.Close()
+
+	// Create the request
+	request, err := http.NewRequest("POST", url, &requestBody)
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return err
+	}
+
+	// Set the necessary headers
+	request.Header.Set("Content-Type", writer.FormDataContentType())
+	request.Header.Set("Accept", "*/*")
+	request.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	request.Header.Set("Referer", "http://"+deviceIp+"/update")
+	request.Header.Set("Referrer-Policy", "strict-origin-when-cross-origin")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36")
+	request.Header.Set("Accept-Encoding", "gzip, deflate")
+
+	// Make the request
+	client := &http.Client{}
+
+	// delete the downloaded firmware file
+	deleteFile(filePath)
+
+	response, err := client.Do(request)
+	if err != nil {
+		fmt.Println("Error making request:", err)
+		return err
+	}
+	defer response.Body.Close()
+
+	// Read and print the response
+	body2, err := io.ReadAll(response.Body)
+
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return err
+	}
+
+	fmt.Println("Response:", string(body2))
+
+	return nil
+}
+
+func PushUpdate(ctx context.Context) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		filePath := "/home/atmegabuzz/Desktop/constillation/hyper-updates/cmd/updates-cli/cmd/.firmware/firmware.bin"
+
+		_, _, _, _, _, tcli, err := handler.DefaultActor()
+
+		body, err := io.ReadAll(r.Body)
+
+		var pushUpdateInfo PushUpdateInfo
+		if err := json.Unmarshal(body, &pushUpdateInfo); err != nil {
+			http.Error(w, "Error decoding JSON", http.StatusBadRequest)
+			return
+		}
+
+		transactionId, err := ids.FromString(pushUpdateInfo.UpdateTx)
+
+		_, _, UpdateExecutableHash, UpdateIPFSUrl, _, _, _, err := tcli.Update(ctx, transactionId, false)
+
+		if err != nil {
+			fmt.Fprintln(w, "Server Error")
+		}
+
+		err_download := downloadIPFSFile(filePath, trimNullChars(string(UpdateIPFSUrl)))
+
+		if err_download != nil {
+			fmt.Println("Error Downloading file:", err)
+			return
+		}
+
+		err = pushFirmwareHash(trimNullChars(string(UpdateExecutableHash)), filePath, pushUpdateInfo.DeviceIp)
+		if err != nil {
+			http.Error(w, "Cannot push hash to firmware: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		err = PushFirmwareUpdate(pushUpdateInfo.DeviceIp, filePath, w)
+		if err != nil {
+			http.Error(w, "Cannot push firmware: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Successfully Pushed updated"))
+	}
+
+}
+
 var startServer = &cobra.Command{
 	Use: "start",
 	RunE: func(*cobra.Command, []string) error {
@@ -272,6 +446,7 @@ var startServer = &cobra.Command{
 		http.HandleFunc("/create-repository", CreateRepositoryHandler(ctx))
 		http.HandleFunc("/create-update", CreateUpdateHandler(ctx))
 		http.HandleFunc("/check-hash", GetUpdateHash(ctx))
+		http.HandleFunc("/push-update", PushUpdate(ctx))
 
 		// Start the HTTP server on port 8080
 		fmt.Println("Server is listening on port 8080...")
