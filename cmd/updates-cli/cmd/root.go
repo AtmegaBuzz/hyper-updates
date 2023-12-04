@@ -52,6 +52,8 @@ func init() {
 		genesisCmd,
 		keyCmd,
 		chainCmd,
+		actionCmd,
+		spamCmd,
 		prometheusCmd,
 		deployCmd,
 		serverCmd,
@@ -149,6 +151,24 @@ func init() {
 		watchChainCmd,
 	)
 
+	// actions
+	actionCmd.AddCommand(
+		fundFaucetCmd,
+
+		transferCmd,
+
+		createAssetCmd,
+		mintAssetCmd,
+		// burnAssetCmd,
+
+		createOrderCmd,
+		fillOrderCmd,
+		closeOrderCmd,
+
+		importAssetCmd,
+		exportAssetCmd,
+	)
+
 	// deploy
 	deployCmd.AddCommand(
 		createRepoCmd,
@@ -160,6 +180,29 @@ func init() {
 	// server
 	serverCmd.AddCommand(
 		startServer,
+	)
+
+	// spam
+	runSpamCmd.PersistentFlags().BoolVar(
+		&randomRecipient,
+		"random-recipient",
+		false,
+		"random recipient",
+	)
+	runSpamCmd.PersistentFlags().IntVar(
+		&maxTxBacklog,
+		"max-tx-backlog",
+		72_000,
+		"max tx backlog",
+	)
+	runSpamCmd.PersistentFlags().Int64Var(
+		&maxFee,
+		"max-fee",
+		-1,
+		"max fee per tx",
+	)
+	spamCmd.AddCommand(
+		runSpamCmd,
 	)
 
 	// prometheus

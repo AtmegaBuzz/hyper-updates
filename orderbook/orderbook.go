@@ -6,6 +6,9 @@ package orderbook
 import (
 	"sync"
 
+	"hyper-updates/actions"
+	"hyper-updates/consts"
+
 	"github.com/ava-labs/avalanchego/ids"
 	"github.com/ava-labs/hypersdk/codec"
 	"github.com/ava-labs/hypersdk/heap"
@@ -60,6 +63,46 @@ func New(c Controller, trackedPairs []string, maxOrdersPerPair int) *OrderBook {
 		orderToPair:      map[ids.ID]string{},
 		maxOrdersPerPair: maxOrdersPerPair,
 		trackAll:         trackAll,
+	}
+}
+
+func (o *OrderBook) Add(txID ids.ID, actor codec.Address, action *actions.CreateOrder) {
+	pair := actions.PairID(action.In, action.Out)
+	order := &Order{
+		txID,
+		codec.MustAddressBech32(consts.HRP, actor),
+		action.In,
+		action.InTick,
+		action.Out,
+		action.OutTick,
+		action.Supply,
+		actor,
+	}
+
+	o.l.Lock()
+	defer o.l.Unlock()
+	h, ok := o.orders[pair]
+	switch {
+	case !ok && !o.trackAll:
+		return
+	case !ok && o.trackAll:
+		o.c.Logger().Info("tracking order book", zap.String("pair", pair))
+		h = heap.New[*Order, float64](o.maxOrdersPerPair+1, true)
+		o.orders[pair] = h
+	}
+	h.Push(&heap.Entry[*Order, float64]{
+		ID:    order.ID,
+		Val:   float64(order.InTick) / float64(order.OutTick),
+		Item:  order,
+		Index: h.Len(),
+	})
+	o.orderToPair[order.ID] = pair
+
+	// Remove worst order if we are above the max we
+	// track per pair
+	if l := h.Len(); l > o.maxOrdersPerPair {
+		e := h.Remove(l - 1)
+		delete(o.orderToPair, e.ID)
 	}
 }
 
