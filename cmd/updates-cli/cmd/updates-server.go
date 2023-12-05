@@ -436,6 +436,25 @@ func PushUpdate(ctx context.Context) http.HandlerFunc {
 
 }
 
+func GetUpdate(ctx context.Context) http.HandlerFunc {
+
+	return func(w http.ResponseWriter, r *http.Request) {
+
+		_, _, _, _, _, tcli, _ := handler.DefaultActor()
+
+		t := r.URL.Query().Get("transactionid")
+		transactionId, _ := ids.FromString(t)
+
+		_, ProjectTxID, UpdateExecutableHash, UpdateIPFSUrl, ForDeviceName, UpdateVersion, _, _ := tcli.Update(ctx, transactionId, false)
+
+		uversion, _ := strconv.ParseUint(trimNullChars(string(UpdateVersion)), 10, 8)
+
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("Project Id: " + trimNullChars(string(ProjectTxID)) + "\n Hash: " + trimNullChars(string(UpdateExecutableHash)) + "\n IPFS URL: " + trimNullChars(string(UpdateIPFSUrl)) + "\n Device Name: " + trimNullChars(string(ForDeviceName)) + "\n VersionL " + string(uversion)))
+	}
+
+}
+
 var startServer = &cobra.Command{
 	Use: "start",
 	RunE: func(*cobra.Command, []string) error {
@@ -447,6 +466,7 @@ var startServer = &cobra.Command{
 		http.HandleFunc("/create-update", CreateUpdateHandler(ctx))
 		http.HandleFunc("/check-hash", GetUpdateHash(ctx))
 		http.HandleFunc("/push-update", PushUpdate(ctx))
+		http.HandleFunc("/get-update", GetUpdate(ctx))
 
 		// Start the HTTP server on port 8080
 		fmt.Println("Server is listening on port 8080...")
