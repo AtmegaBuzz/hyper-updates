@@ -93,13 +93,8 @@ func GetUpdateHash(ctx context.Context) http.HandlerFunc {
 		if err != nil {
 
 			fmt.Fprintln(w, "Invalid Id Passed")
-			response := map[string]interface{}{
-				"status": "failed",
-			}
-
-			w.Header().Set("Content-Type", "application/json")
-			// w.WriteHeader(http.StatusOK)
-			json.NewEncoder(w).Encode(response)
+			http.Error(w, "Invalid TxId", http.StatusBadRequest)
+			return
 
 		} else {
 
@@ -107,12 +102,15 @@ func GetUpdateHash(ctx context.Context) http.HandlerFunc {
 
 			if err != nil {
 				fmt.Fprintln(w, "Server Error")
+				http.Error(w, "Cannot query chain", http.StatusInternalServerError)
+				return
 			}
 
 			trueHash := trimNullChars(string(UpdateExecutableHash))
 			response := ""
 			if hash != trueHash {
-				response = "INVALID"
+				http.Error(w, "Invalid String", http.StatusBadRequest)
+				return
 			} else {
 				response = "VALID"
 			}
@@ -270,9 +268,10 @@ type PushUpdateInfo struct {
 	DeviceIp string `json:"device-ip"`
 }
 
-func pushFirmwareHash(hash, filePath, deviceIp string) error {
+func pushFirmwareHash(hash, txid, filePath, deviceIp string) error {
 
-	url := "http://" + deviceIp + "/ota/start?mode=fr&hash=" + hash
+	url := "http://" + deviceIp + "/ota/start?mode=fr&hash=" + hash + "&txid=" + txid
+	fmt.Println(url)
 
 	// Create the request
 	request, err := http.NewRequest("GET", url, nil)
@@ -391,7 +390,8 @@ func PushUpdate(ctx context.Context) http.HandlerFunc {
 
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		filePath := "/home/atmegabuzz/Desktop/constillation/hyper-updates/cmd/updates-cli/cmd/.firmware/firmware.bin"
+		filePath, err := os.Getwd()
+		filePath += "/firmware.bin"
 
 		_, _, _, _, _, tcli, err := handler.DefaultActor()
 
@@ -418,7 +418,7 @@ func PushUpdate(ctx context.Context) http.HandlerFunc {
 			return
 		}
 
-		err = pushFirmwareHash(trimNullChars(string(UpdateExecutableHash)), filePath, pushUpdateInfo.DeviceIp)
+		err = pushFirmwareHash(trimNullChars(string(UpdateExecutableHash)), transactionId.String(), filePath, pushUpdateInfo.DeviceIp)
 		if err != nil {
 			http.Error(w, "Cannot push hash to firmware: "+err.Error(), http.StatusInternalServerError)
 			return
